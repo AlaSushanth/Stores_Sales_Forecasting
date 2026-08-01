@@ -188,8 +188,6 @@ The close agreement between the cross-validation and test scores indicates that 
 
 Feature importance analysis showed that customer transactions, product family, promotions, and oil prices were among the most influential variables affecting sales predictions.
 
-![Feature Importance](images/feature_importance.png)
-
 ---
 
 # Model Explainability using SHAP
@@ -206,7 +204,7 @@ Important observations include
 - Store-specific characteristics contribute to prediction accuracy.
 - Holiday-related features have relatively smaller influence compared to customer traffic.
 
-![SHAP Summary](images/shap_summary.png)
+![SHAP Summary]
 
 ---
 
@@ -216,7 +214,7 @@ The Actual vs Predicted plot demonstrates how closely the predicted sales follow
 
 Most observations lie close to the ideal prediction line, indicating strong predictive performance. A small number of observations with extremely high sales are underestimated, suggesting that rare peak-demand events remain challenging for the model.
 
-![Actual vs Predicted](images/actual_vs_predicted.png)
+![Actual vs Predicted]
 
 ---
 
@@ -226,7 +224,7 @@ Residual analysis was performed to evaluate model errors.
 
 The residual plot shows that the majority of residuals are centered around zero, indicating unbiased predictions for most observations. However, a few large positive residuals correspond to rare high-sales events where the model underestimates demand.
 
-![Residual Plot](images/residual_plot.png)
+![Residual Plot]
 
 ---
 

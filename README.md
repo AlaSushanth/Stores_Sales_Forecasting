@@ -1,4 +1,5 @@
 🛒 Store Sales Forecasting
+
 📌 Project Overview
 
 Retail businesses need to make important decisions before actual sales occur. Poor demand estimation can lead to:

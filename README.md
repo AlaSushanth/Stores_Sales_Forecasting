@@ -1,4 +1,4 @@
-# Store Sales Forecasting using XGBoost
+# Store Sales Forecasting 
 
 ## Project Overview
 

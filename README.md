@@ -1,302 +1,370 @@
-# Store Sales Forecasting 
+🛒 Store Sales Forecasting
+📌 Project Overview
 
-## Project Overview
+Retail businesses need to make important decisions before actual sales occur. Poor demand estimation can lead to:
 
-Forecasting retail sales is one of the most important business problems in the retail industry. Accurate sales predictions help companies optimize inventory, reduce stock shortages, improve supply chain planning, and make better promotional decisions.
+Overstocking and unnecessary inventory costs
+Stockouts and lost sales opportunities
+Inefficient allocation of products across stores
+Poor staffing and operational planning
+Ineffective promotional planning
 
-In this project, I developed an end-to-end machine learning pipeline to forecast daily sales for multiple stores and product families using historical sales data. Rather than relying only on historical sales, I integrated multiple business datasets including store information, customer transactions, holiday events, and oil prices to improve prediction accuracy.
+This project develops a machine learning-based store sales forecasting system to predict near-term sales using historical sales patterns and other relevant features.
 
-The project focuses not only on model building but also on solving real-world data engineering challenges such as merging multiple datasets, handling duplicate holiday records, feature engineering, missing value treatment, and model interpretation using SHAP.
+The main objective is not just to obtain a high prediction score, but to build a forecasting system that can help retail businesses estimate upcoming demand and make better data-driven decisions.
 
----
+🎯 Business Objective
 
-# Business Problem
+The objective of this project is to answer the question:
 
-Retail companies generate enormous amounts of transactional data every day. However, sales are influenced by many external factors such as holidays, promotions, store location, customer traffic, and even oil prices.
+Can historical store-level sales data be used to forecast future sales and support better inventory, operational, and promotional decisions?
 
-The objective of this project is to build a machine learning model capable of accurately predicting daily sales for each store-product combination while identifying the most influential factors affecting sales.
+By forecasting future sales, a retail company can potentially use the predictions for:
 
----
+Inventory planning
+Demand estimation
+Supply-chain planning
+Staffing decisions
+Promotional planning
+📊 Dataset
 
-# Dataset Description
+The dataset contains store-level sales information with multiple store and product-family combinations over time.
 
-The project uses the **Store Sales – Time Series Forecasting** dataset available on Kaggle.
+The target variable is:
 
-Dataset Link
+sales
 
-https://www.kaggle.com/competitions/store-sales-time-series-forecasting
+The dataset also contains additional information related to stores, products, promotions, calendar events, and holidays.
 
-The project combines information from six different datasets.
+Each sales time series is identified using:
 
-| Dataset | Purpose |
-|----------|---------|
-| train.csv | Historical sales data used for training |
-| test.csv | Future data used for prediction |
-| stores.csv | Store metadata such as city, state, cluster and store type |
-| holidays_events.csv | National, regional and local holiday information |
-| oil.csv | Daily oil prices |
-| transactions.csv | Daily customer transaction count for each store |
+store_nbr + family
 
-**Note**
+Therefore, historical sales patterns were analysed separately for each store-product family combination.
 
-The original `train.csv` file is larger than GitHub's upload limit (100 MB). Therefore, it has not been included in this repository. The complete dataset can be downloaded from the Kaggle competition page.
-
----
-
-# Project Workflow
-
-The overall workflow followed during the project is shown below.
-
-```
-
-Raw Datasets
-│
-▼
-Data Cleaning
-│
-▼
-Merge Multiple Datasets
-│
-▼
-Handle Missing Values
-│
-▼
+🔄 Project Workflow
+Raw Data
+    ↓
+Data Preprocessing
+    ↓
+Temporal Train-Test Split
+    ↓
 Feature Engineering
-│
-▼
-Preprocessing Pipeline
-│
-▼
-XGBoost Regression
-│
-▼
+    ↓
+Time Series Cross-Validation
+    ↓
+Hyperparameter Tuning
+    ↓
+Train Best Model on 8 Lakh Observations
+    ↓
+15-Day Recursive Forecasting
+    ↓
 Model Evaluation
-│
-▼
-Model Explainability
-│
-▼
+    ↓
+High-Demand Error Analysis
+    ↓
+Feature Importance Analysis
+    ↓
 Business Insights
+🧹 Data Preprocessing
 
-```
+The preprocessing pipeline handles the different feature types in the dataset.
 
----
+The pipeline includes:
 
-# Data Integration
+Missing value handling
+Numerical feature preprocessing
+Categorical feature encoding
+Feature scaling where required
 
-One of the most challenging parts of this project was integrating information spread across multiple datasets.
+A machine learning pipeline was used to ensure that preprocessing and model training were performed consistently.
 
-The original sales dataset did not contain important business information such as customer transactions, store metadata, holiday events, or oil prices. Therefore, these datasets were merged using appropriate keys such as **date**, **store number**, **city**, and **state**.
+⏳ Temporal Train-Test Split
 
-During the merging process, the holiday dataset introduced duplicate rows because multiple holiday events could occur on the same date. Instead of allowing duplicate rows to increase the size of the training dataset, holiday records were aggregated before merging. This ensured that every sales record remained unique while preserving all holiday information.
+Since this is a time-series forecasting problem, the data was not randomly split.
 
----
+Instead, a chronological cutoff date was used.
 
-# Data Preprocessing
+Historical Data
+       ↓
+Training Dataset
+       ↓
+Cutoff Date
+       ↓
+Testing Dataset
 
-A significant amount of preprocessing was performed before model training.
+The model was trained only on historical information and evaluated on future observations.
 
-### Missing Value Handling
+This approach prevents the model from using future sales information during training.
 
-Missing values in numerical and categorical features were handled differently based on their business meaning.
+📈 Time Series Cross-Validation
 
-- Missing oil prices were imputed.
-- Missing holiday information was replaced with "No Holiday".
-- Missing transfer information was handled separately.
+TimeSeriesSplit was used for cross-validation.
 
-This approach preserved the semantic meaning of the data instead of blindly applying statistical imputation.
+Unlike normal cross-validation, it preserves the chronological order of the observations.
 
----
+Conceptually:
 
-### Feature Engineering
+Fold 1:
 
-Several new features were created to improve model performance.
+Train → Past Data
+Test  → Future Data
 
-Holiday information was separated into
 
-- National Holiday
-- National Holiday Type
-- National Transfer Status
-- Regional Holiday
-- Regional Holiday Type
-- Regional Transfer Status
-- Local Holiday
-- Local Holiday Type
-- Local Transfer Status
+Fold 2:
 
-Additional business features included
+Train → More Past Data
+Test  → Future Data
 
-- Customer Transactions
-- Oil Price
-- Promotion Count
-- Store Metadata
 
----
+Fold 3:
 
-### Categorical Encoding
+Train → Even More Historical Data
+Test  → Future Data
 
-Categorical variables such as
+This provides a more realistic evaluation for a forecasting problem.
 
-- Product Family
-- Store Type
-- City
-- State
-- Holiday Type
+⚙️ Model Selection and Hyperparameter Tuning
 
-were encoded using **One-Hot Encoding**.
+Multiple model configurations were evaluated using GridSearchCV with time-series cross-validation.
 
----
+The best-performing model was selected based on the cross-validation results.
 
-### Numerical Pipeline
+The final model was then trained using approximately:
 
-Numerical features were processed using a preprocessing pipeline consisting of
+800,000 training observations
+🧠 Feature Engineering
 
-- Missing Value Imputation
-- Outlier Capping
-- Power Transformation
-- Standard Scaling
+To capture the temporal behaviour of sales, lag features and Exponentially Weighted Moving Average (EWM) features were created.
 
-The entire preprocessing workflow was implemented using Scikit-learn's **Pipeline** and **ColumnTransformer**, ensuring consistent preprocessing during both training and testing.
+Before creating these features, the data was ordered using:
 
----
+store_nbr → family → date
 
-# Model Development
+This ensures that each store-product family has its own chronological sales history.
 
-After preprocessing, multiple regression models were considered. The final model selected for this project was **XGBoost Regressor** because of its ability to model complex nonlinear relationships while handling large structured datasets efficiently.
+Lag Features
 
-Hyperparameter tuning was performed using **RandomizedSearchCV** to obtain the optimal model configuration.
+The following lag features were created:
 
-Cross-validation was used during training to ensure that the model generalized well and did not overfit the training data.
+lag_1
 
----
+Sales from the previous day.
 
-# Model Performance
+Yesterday's Sales
+        ↓
+Predict Today's Sales
+lag_7
 
-The final XGBoost model achieved the following performance.
+Sales from seven days earlier.
 
-| Metric | Score |
-|---------|-------|
-| Cross Validation R² | **0.79** |
-| Test R² | **0.82** |
-| RMSE | **472** |
+Sales 7 Days Ago
+        ↓
+Predict Future Sales
+lag_14
 
-The close agreement between the cross-validation and test scores indicates that the model generalizes well to unseen data.
+Sales from fourteen days earlier.
 
----
+These features allow the model to learn from previous sales behaviour.
 
-# Feature Importance
+📉 Exponentially Weighted Moving Average Features
 
-Feature importance analysis showed that customer transactions, product family, promotions, and oil prices were among the most influential variables affecting sales predictions.
+The following EWM features were created:
 
----
+ewm_7
+ewm_14
 
-# Model Explainability using SHAP
+EWM provides a smoothed representation of historical sales, while giving more importance to recent observations.
 
-To improve model interpretability, SHAP (SHapley Additive exPlanations) was used.
+ewm_7
 
-The SHAP Summary Plot provides a global explanation of how each feature contributes to the model predictions.
+Represents the recent smoothed sales level.
 
-Important observations include
+It gives relatively more importance to recent sales and can capture short-term demand behaviour.
 
-- Customer transactions have the strongest positive impact on sales.
-- Product family significantly influences demand.
-- Oil prices moderately affect sales.
-- Store-specific characteristics contribute to prediction accuracy.
-- Holiday-related features have relatively smaller influence compared to customer traffic.
+Conceptually:
 
-![SHAP Summary]
+Past Sales
+    ↓
+More importance to recent observations
+    ↓
+EWM_7
+    ↓
+Recent Smoothed Demand Level
+ewm_14
 
----
+Represents a smoother sales level over a relatively longer recent history.
 
-# Actual vs Predicted Analysis
+EWM_7
+   ↓
+More responsive to recent changes
 
-The Actual vs Predicted plot demonstrates how closely the predicted sales follow the actual sales values.
+EWM_14
+   ↓
+More smooth and less sensitive to short-term fluctuations
 
-Most observations lie close to the ideal prediction line, indicating strong predictive performance. A small number of observations with extremely high sales are underestimated, suggesting that rare peak-demand events remain challenging for the model.
+The model can use both short-term and relatively longer-term sales behaviour for forecasting.
 
-![Actual vs Predicted]
+🔮 15-Day Recursive Forecasting
 
----
+The final model was evaluated using a recursive multi-step forecasting approach.
 
-# Residual Analysis
+The test period contained approximately:
 
-Residual analysis was performed to evaluate model errors.
+26,730 observations
 
-The residual plot shows that the majority of residuals are centered around zero, indicating unbiased predictions for most observations. However, a few large positive residuals correspond to rare high-sales events where the model underestimates demand.
+covering a 15-day forecasting horizon.
 
-![Residual Plot]
+The forecasting process works as follows:
 
----
+Predict Day 1
+     ↓
+Add Prediction to Historical Sales
+     ↓
+Predict Day 2
+     ↓
+Use Previous Prediction as Historical Information
+     ↓
+Predict Day 3
+     ↓
+...
+     ↓
+Predict Day 15
 
-# Business Insights
+This simulates a realistic forecasting scenario because actual future sales are not assumed to be available while generating predictions.
 
-The analysis produced several useful business insights.
+📏 Model Evaluation
 
-- Customer transactions are the strongest indicator of future sales.
-- Product category plays a major role in sales forecasting.
-- Promotional campaigns positively influence sales.
-- Oil prices have a measurable impact on purchasing behaviour.
-- Holiday effects vary depending on holiday type and location.
-- The model performs well under normal business conditions but struggles with extremely high-demand events.
+The final model was evaluated using:
 
----
+Root Mean Squared Error (RMSE)
 
-# Technologies Used
+RMSE measures the average magnitude of prediction error, giving greater importance to large errors.
 
-Programming Language
+R² Score
 
-- Python
+R² measures how much variation in sales is explained by the model.
 
-Libraries
+🏆 Final Results
 
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
-- Scikit-learn
-- XGBoost
-- SHAP
+The model was evaluated on approximately:
 
-Machine Learning Concepts
+26,730 future observations
+Overall Performance
+Metric	Result
+RMSE	279.65
+R² Score	0.94
 
-- Feature Engineering
-- Pipeline
-- ColumnTransformer
-- One-Hot Encoding
-- Cross Validation
-- Hyperparameter Tuning
-- Model Explainability
+An R² score of approximately 0.94 indicates that the model captures a substantial proportion of the variation in sales for the test period.
 
----
+🔥 High-Demand Sales Analysis
 
-# Repository Structure
+A separate analysis was performed to evaluate the model's performance during high-demand periods.
 
-```
+High-demand observations were defined as observations above the:
 
-Store-Sales-Forecasting
-│
-├── data/
-├── images/
-├── notebooks/
-├── requirements.txt
-└── README.md
+90th percentile of sales
+Results
+Metric	Result
+High-Demand Threshold	1195
+High-Demand Observations	2674
+High-Demand RMSE	842.86
 
-```
+The high-demand RMSE was substantially higher than the overall RMSE.
 
----
+This indicates that:
 
-# Future Improvements
+Extreme or high-demand sales periods remain more difficult for the model to predict accurately than normal sales periods.
 
-Several improvements can further enhance the forecasting performance.
+This is an important limitation because high-demand observations represent a smaller portion of the dataset and can contain sudden demand changes.
 
-- Incorporate lag-based time-series features.
-- Introduce rolling-window statistics.
-- Compare XGBoost with CatBoost and LightGBM.
-- Improve prediction of rare peak-sales events.
-- Deploy the model as a forecasting API or dashboard.
+🔍 Feature Importance Analysis
 
----
+Feature importance analysis was performed using the trained model.
 
-# Conclusion
+One of the most important features was:
 
-This project demonstrates an end-to-end machine learning workflow, beginning with data integration and preprocessing, followed by feature engineering, model development, evaluation, and explainability. Beyond building a predictive model, the project emphasizes solving practical data challenges and extracting business insights from retail sales data, making it representative of a real-world data science workflow.
+EWM_7
+
+with feature importance of approximately:
+
+0.71
+
+This indicates that the recent smoothed sales level contained substantial predictive information for forecasting future sales.
+
+The finding suggests that:
+
+Recent demand behaviour is highly informative for predicting near-term store sales.
+
+The model therefore relies strongly on recent historical demand patterns while also considering other available features.
+
+💼 Business Insights
+
+The forecasting system can support retail businesses in estimating upcoming demand.
+
+The predicted sales can potentially be used for:
+
+📦 Inventory Planning
+
+Estimate expected demand and plan inventory accordingly.
+
+🚚 Supply-Chain Planning
+
+Prepare product availability based on anticipated sales.
+
+👥 Staffing
+
+Allocate employees based on expected store demand.
+
+📢 Promotional Planning
+
+Identify periods of lower expected demand where promotional activities may be useful.
+
+📊 Demand Monitoring
+
+Compare recent sales patterns with predicted future demand.
+
+⚠️ Key Limitation
+
+The model performs well overall but has relatively higher prediction error during high-demand periods.
+
+Possible reasons include:
+
+Sudden demand spikes
+Unusual events
+High-demand observations being less frequent
+Error accumulation during recursive forecasting
+
+Future improvements could include:
+
+Direct multi-step forecasting
+Additional promotion and event-related features
+Advanced gradient boosting models
+Ensemble forecasting approaches
+Special modelling strategies for extreme demand periods
+🛠️ Technologies Used
+Python
+Pandas
+NumPy
+Scikit-learn
+XGBoost
+Matplotlib
+🚀 Key Takeaway
+
+This project demonstrates a complete machine learning workflow for store sales forecasting.
+
+The model combines:
+
+Historical Sales Patterns
+        +
+Lag Features
+        +
+Exponentially Weighted Moving Averages
+        +
+Other Business Features
+        ↓
+Future Sales Forecast
+        ↓
+Business Decision Support
+
+The final model achieved an R² score of approximately 0.94 on a future 15-day test period, while feature importance analysis showed that recent smoothed sales behaviour was highly informative for near-term forecasting.

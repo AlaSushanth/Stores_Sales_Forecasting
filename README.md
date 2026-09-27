@@ -3,7 +3,7 @@
 A machine learning-based forecasting system that predicts near-term store sales using historical sales patterns, engineered time-series features, and gradient boosting models — built to support real retail decision-making.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
-!![Random Forest](https://img.shields.io/badge/RandomForest-Model-orange)
+![Random Forest](https://img.shields.io/badge/RandomForest-Model-orange)
 ![Scikit--learn](https://img.shields.io/badge/Scikit--learn-Pipeline-red)
 ![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
 
